@@ -87,15 +87,13 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
                     <span>example.js</span>
                   </div>
                   <pre className='text-sm text-gray-300 font-mono'>
-                    <code>
-                      {`function calculateTotal(items) {
-                        var total = 0;
-                        for (var i = 0; i <= items.length; i++) {
-                            total += items[i].price;
-                            }
-                            return total;
-                        }`}
-                    </code>
+                    <code>{`function calculateTotal(items) {
+  var total = 0;
+  for (var i = 0; i <= items.length; i++) {
+    total += items[i].price;
+  }
+  return total;
+}`}</code>
                   </pre>
                 </div>
 
@@ -148,9 +146,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
 
       {/* Features Grid */}
       <div className='max-w-7xl mx-auto px-6 py-24'>
-        <h2 className='text-4xl text-center mb-16 text-red underline'>
-          Key Features
-        </h2>
+        <h2 className='text-4xl text-center mb-16'>Key Features</h2>
 
         <div className='grid md:grid-cols-2 lg:grid-cols-4 gap-6'>
           <div className='p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-purple-500/50 transition-colors'>
@@ -190,9 +186,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
 
       {/* Why Developers Love It */}
       <div className='max-w-7xl mx-auto px-6 py-24'>
-        <h2 className='text-4xl text-center mb-16 underline'>
-          Why Developers Love It
-        </h2>
+        <h2 className='text-4xl text-center mb-16'>Why Developers Love It</h2>
 
         <div className='max-w-3xl mx-auto space-y-6'>
           <div className='flex items-start gap-4 p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10'>
