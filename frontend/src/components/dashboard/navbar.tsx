@@ -1,3 +1,4 @@
+'use client';
 import {
   Bug,
   LayoutDashboard,
@@ -6,24 +7,34 @@ import {
   User,
   LogOut,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface NavbarProps {
   currentPage: string;
   onNavigate: (page: string) => void;
-  onLogout: () => void;
+  //   onLogout: () => void;
 }
 
 export default function Navbar({
   currentPage,
-  onNavigate,
-  onLogout,
-}: NavbarProps) {
+}: //   onNavigate,
+//   onLogout,
+NavbarProps) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'review', label: 'Code Review', icon: Code },
+    { id: 'code-review', label: 'Code Review', icon: Code },
     { id: 'history', label: 'History', icon: History },
     { id: 'profile', label: 'Profile', icon: User },
   ];
+  const router = useRouter();
+
+  const onNavigate = (id: string) => {
+    router.push(id);
+  };
+
+  const onLogout = () => {
+    router.push('/');
+  };
 
   return (
     <nav className='border-b border-white/10 bg-black/50 backdrop-blur-xl sticky top-0 z-50'>
