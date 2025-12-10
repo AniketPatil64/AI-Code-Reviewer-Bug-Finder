@@ -71,7 +71,7 @@ ReviewDetailsProps) {
       <Navbar
         currentPage='details'
         onNavigate={onNavigate}
-        onLogout={onLogout}
+        // onLogout={onLogout}
       />
 
       <div className='max-w-7xl mx-auto px-6 py-12'>

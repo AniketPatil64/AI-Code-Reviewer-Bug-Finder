@@ -26,7 +26,7 @@ export default function Profile({ onNavigate, onLogout }: ProfileProps) {
       <Navbar
         currentPage='profile'
         onNavigate={onNavigate}
-        onLogout={onLogout}
+        // onLogout={onLogout}
       />
 
       <div className='max-w-4xl mx-auto px-6 py-12'>
