@@ -8,6 +8,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 
 interface NavbarProps {
   currentPage: string;
@@ -19,6 +20,7 @@ export default function Navbar({
   currentPage,
 }: //   onNavigate,
 //   onLogout,
+
 NavbarProps) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -32,8 +34,10 @@ NavbarProps) {
     router.push(id);
   };
 
-  const onLogout = () => {
-    router.push('/');
+  const onLogout = async () => {
+    await signOut({
+      callbackUrl: '/',
+    });
   };
 
   return (

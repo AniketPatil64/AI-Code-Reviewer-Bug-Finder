@@ -1,6 +1,7 @@
 'use client';
 import { Github, Chrome, Bug, StepBack } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -8,8 +9,10 @@ interface LoginPageProps {
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const router = useRouter();
-  const onLogins = () => {
-    router.push('/dashboard');
+  const onLogins = async () => {
+    await signIn('google', {
+      callbackUrl: '/dashboard',
+    });
   };
   return (
     <>

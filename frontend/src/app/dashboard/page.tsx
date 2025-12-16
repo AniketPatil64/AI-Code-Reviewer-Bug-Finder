@@ -2,6 +2,7 @@
 import Navbar from '@/components/dashboard/navbar';
 import { Code, Bug, Wrench, Globe, Eye, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
@@ -64,6 +65,14 @@ export default function Dashboard({
       fixesCount: 1,
     },
   ]);
+  const { data: session, status } = useSession();
+  const getFirstNameFormatted = (fullName?: string): string => {
+    if (!fullName) return '';
+
+    const firstName = fullName.trim().split(' ')[0];
+
+    return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+  };
   return (
     <div className='min-h-screen bg-black text-white'>
       <Navbar
@@ -75,7 +84,9 @@ export default function Dashboard({
       <div className='max-w-7xl mx-auto px-6 py-12'>
         {/* Greeting */}
         <div className='mb-12'>
-          <h1 className='text-4xl mb-2'>Hey Aniket 👋</h1>
+          <h1 className='text-4xl mb-2'>
+            Hey {getFirstNameFormatted(session?.user?.name || '')} 👋
+          </h1>
           <p className='text-gray-400'>Here&apos;s your recent activity</p>
         </div>
 
