@@ -87,7 +87,7 @@ export default function History({
     <div className='min-h-screen bg-black text-white'>
       <Navbar
         currentPage='history'
-        onNavigate={onNavigate}
+        //onNavigate={onNavigate}
         // onLogout={onLogout}
       />
 

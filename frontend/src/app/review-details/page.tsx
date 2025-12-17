@@ -70,7 +70,7 @@ ReviewDetailsProps) {
     <div className='min-h-screen bg-black text-white'>
       <Navbar
         currentPage='details'
-        onNavigate={onNavigate}
+        //onNavigate={onNavigate}
         // onLogout={onLogout}
       />
 
