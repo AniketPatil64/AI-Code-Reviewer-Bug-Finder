@@ -8,12 +8,19 @@ import {
   Mail,
   Shield,
 } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 
 interface LandingPageProps {
   onNavigate: (page: string) => void;
 }
 
 export default function LandingPage({ onNavigate }: LandingPageProps) {
+  const onGithubLogin = async () => {
+    await signIn('github', {
+      callbackUrl: '/dashboard',
+    });
+  };
+
   return (
     <div className='min-h-screen bg-black text-white'>
       {/* Hero Section */}
@@ -57,7 +64,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
 
             <div className='flex gap-4 justify-center'>
               <button
-                onClick={() => onNavigate('login')}
+                onClick={onGithubLogin}
                 className='px-8 py-4 rounded-lg bg-purple-600 hover:bg-purple-500 transition-colors flex items-center gap-2'
               >
                 <Github className='w-5 h-5' />
