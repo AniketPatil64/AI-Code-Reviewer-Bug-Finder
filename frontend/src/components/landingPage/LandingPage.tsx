@@ -71,7 +71,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
                 Sign In with GitHub
               </button>
               <button
-                onClick={() => onNavigate('review')}
+                onClick={() => onNavigate('code-review')}
                 className='px-8 py-4 rounded-lg bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-sm border border-white/10'
               >
                 Try Demo

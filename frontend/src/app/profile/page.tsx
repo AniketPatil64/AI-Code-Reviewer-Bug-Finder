@@ -25,7 +25,7 @@ export default function Profile({ onNavigate, onLogout }: ProfileProps) {
     <div className='min-h-screen bg-black text-white'>
       <Navbar
         currentPage='profile'
-        onNavigate={onNavigate}
+        //onNavigate={onNavigate}
         // onLogout={onLogout}
       />
 
