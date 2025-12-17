@@ -14,6 +14,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       callbackUrl: '/dashboard',
     });
   };
+  const onGithubLogin = async () => {
+    await signIn('github', {
+      callbackUrl: '/dashboard',
+    });
+  };
   return (
     <>
       <nav className='flex justify-between items-center nav-spacing'>
@@ -61,7 +66,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
           <div className='space-y-4'>
             <button
-              onClick={onLogin}
+              onClick={onGithubLogin}
               className='w-full px-6 py-4 rounded-xl bg-white text-black hover:bg-gray-100 transition-colors flex items-center justify-center gap-3 group'
             >
               <Github className='w-5 h-5 group-hover:scale-110 transition-transform' />
