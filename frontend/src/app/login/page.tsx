@@ -9,7 +9,7 @@ interface LoginPageProps {
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const router = useRouter();
-  const onLogins = async () => {
+  const onGoogleLogin = async () => {
     await signIn('google', {
       callbackUrl: '/dashboard',
     });
@@ -74,7 +74,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </button>
 
             <button
-              onClick={onLogins}
+              onClick={onGoogleLogin}
               className='w-full px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors backdrop-blur-sm border border-white/10 flex items-center justify-center gap-3 group'
             >
               <Chrome className='w-5 h-5 group-hover:scale-110 transition-transform' />
