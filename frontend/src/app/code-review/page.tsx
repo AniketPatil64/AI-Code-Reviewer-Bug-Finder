@@ -180,13 +180,27 @@ export default function CodeReview({ onNavigate, onLogout }: CodeReviewProps) {
                     onChange={(e) => setLanguage(e.target.value)}
                     className='bg-transparent text-sm focus:outline-none cursor-pointer'
                   >
-                    <option value='JavaScript'>JavaScript</option>
-                    <option value='Python'>Python</option>
-                    <option value='Java'>Java</option>
-                    <option value='C++'>C++</option>
-                    <option value='Go'>Go</option>
-                    <option value='Rust'>Rust</option>
-                    <option value='TypeScript'>TypeScript</option>
+                    <option className='text-black' value='JavaScript'>
+                      JavaScript
+                    </option>
+                    <option className='text-black' value='Python'>
+                      Python
+                    </option>
+                    <option className='text-black' value='Java'>
+                      Java
+                    </option>
+                    <option className='text-black' value='C++'>
+                      C++
+                    </option>
+                    <option className='text-black' value='Go'>
+                      Go
+                    </option>
+                    <option className='text-black' value='Rust'>
+                      Rust
+                    </option>
+                    <option className='text-black' value='TypeScript'>
+                      TypeScript
+                    </option>
                   </select>
                 </div>
                 <button
