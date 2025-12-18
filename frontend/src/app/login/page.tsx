@@ -1,7 +1,9 @@
 'use client';
 import { Github, Chrome, Bug, StepBack } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
+import { useDemoStore } from '@/store/demoStore';
+import { useEffect } from 'react';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -9,6 +11,15 @@ interface LoginPageProps {
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const router = useRouter();
+  const { status } = useSession(); // 👈 source of truth
+
+  useEffect(() => {
+    // console.log('Session status:', status);
+    if (status === 'authenticated') {
+      router.replace('/dashboard'); // redirect logged-in users
+    }
+  }, [status, router]);
+  const setLoggedIn = useDemoStore((s) => s.setLoggedIn);
   const onGoogleLogin = async () => {
     await signIn('google', {
       callbackUrl: '/dashboard',

@@ -14,6 +14,10 @@ import {
   Sun,
 } from 'lucide-react';
 import Navbar from '@/components/dashboard/navbar';
+import { useDemoStore } from '@/store/demoStore';
+import { useRouter } from 'next/navigation';
+import CommonModal from '@/components/popup/CommonModal';
+import { useSession } from 'next-auth/react';
 
 interface CodeReviewProps {
   onNavigate: (page: string) => void;
@@ -25,136 +29,63 @@ interface CodeReviewProps {
   onLogout: () => void;
 }
 
-/* ---------------------------------------------
-   🔥 CONSTANT VALUES (Added + Expanded)
----------------------------------------------- */
-
-// Language Dropdown Options
-const LANGUAGE_OPTIONS = [
-  'JavaScript',
-  'TypeScript',
-  'Python',
-  'Java',
-  'C++',
-  'Go',
-  'Rust',
-  'C#',
-  'PHP',
-  'Swift',
-];
-
-// Severity Styles
-const SEVERITY_STYLES: Record<string, string> = {
-  critical: 'bg-red-500/10 border-red-500/20 text-red-400',
-  warning: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400',
-  info: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
-  suggestion: 'bg-purple-500/10 border-purple-500/20 text-purple-300',
-  minor: 'bg-gray-500/10 border-gray-500/20 text-gray-400',
-};
-
-// Extra mock bugs (added values)
-const MOCK_BUGS = [
-  {
-    line: 2,
-    severity: 'critical',
-    description: 'Null reference detected — possible crash',
-    suggestion: 'Check object before accessing its properties',
-  },
-  {
-    line: 10,
-    severity: 'warning',
-    description: 'Unused variable discovered',
-    suggestion: 'Remove or use this variable',
-  },
-  {
-    line: 5,
-    severity: 'info',
-    description: 'Function can be optimized for better memory usage',
-    suggestion: 'Refactor repeated calculations into variables',
-  },
-  {
-    line: 7,
-    severity: 'suggestion',
-    description: 'Consider using async/await instead of callbacks',
-    suggestion: 'Rewrite function using async syntax for readability',
-  },
-];
-
-export default function CodeReview({ onNavigate, onLogout }: CodeReviewProps) {
+export default function CodeReview({}: CodeReviewProps) {
   const [code, setCode] = useState('');
+  const { status } = useSession(); // 👈 source of truth
+  const router = useRouter();
   const [language, setLanguage] = useState('JavaScript');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [result, setResult] = useState([]);
+  const isAnalyzing = false;
+  const result = null;
+  const { attempts, increment, isLoggedIn } = useDemoStore();
+  const [showLimitPopup, setShowLimitPopup] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     'bugs' | 'fixes' | 'explanation' | 'complexity'
   >('bugs');
   const [isDark, setIsDark] = useState(true);
 
-  const analyzeCode = () => {
-    setIsAnalyzing(true);
-
-    // Simulate AI analysis
-    setTimeout(() => {
-      const mockResult = {
-        id: Date.now().toString(),
-        title: `code_${Date.now()}.${language.toLowerCase()}`,
-        language,
-        code,
-        bugs: [
-          {
-            line: 3,
-            severity: 'critical',
-            description: 'Potential null pointer exception',
-            suggestion: 'Add null check before accessing object properties',
-          },
-          {
-            line: 7,
-            severity: 'warning',
-            description: 'Variable declared but never used',
-            suggestion: 'Remove unused variable or implement its usage',
-          },
-          {
-            line: 12,
-            severity: 'info',
-            description:
-              'Consider using const instead of let for immutable values',
-            suggestion: 'Replace let with const for better code clarity',
-          },
-        ],
-        explanation: `This ${language} code contains several issues that could lead to runtime errors and maintainability problems. The most critical issue is the potential null pointer exception on line 3, which could crash the application if not handled properly. Additionally, there are code quality improvements that should be addressed, such as removing unused variables and following modern best practices for variable declaration.`,
-        complexity:
-          'O(n) - Linear time complexity. The algorithm iterates through the input once, making it efficient for most use cases.',
-        date: new Date().toISOString().split('T')[0],
-        bugsCount: 3,
-        fixesCount: 3,
-      };
-
-      //   setResult(mockResult);
-      //   onAddReview(mockResult);
-      setIsAnalyzing(false);
-    }, 2000);
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'bg-red-500/10 border-red-500/20 text-red-400';
-      case 'warning':
-        return 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400';
-      case 'info':
-        return 'bg-blue-500/10 border-blue-500/20 text-blue-400';
-      default:
-        return 'bg-gray-500/10 border-gray-500/20 text-gray-400';
+  const handleAnalyze = () => {
+    if (status === 'authenticated') {
+      return;
     }
+    if (isLoggedIn) {
+      console.log('Analyze code (logged-in)');
+      return;
+    }
+
+    if (attempts >= 3) {
+      setIsModalOpen(true);
+      setShowLimitPopup(true);
+      return;
+    }
+
+    increment();
+    console.log('Analyze demo code');
   };
 
   return (
     <div className='min-h-screen bg-black text-white'>
       <Navbar
         currentPage='review'
-        onNavigate={onNavigate}
+        // onNavigate={onNavigate}
         // onLogout={onLogout}
       />
+      {showLimitPopup && (
+        <CommonModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title='🔒 Demo Limit Reached'
+          message='Unlock unlimited code reviews by signing in—improve your code instantly.'
+          buttons={[
+            { label: 'Sign In', route: '/login', variant: 'primary' },
+            {
+              label: 'Cancel',
+              action: () => router.push('/'),
+              variant: 'secondary',
+            },
+          ]}
+        />
+      )}
 
       <div className='max-w-7xl mx-auto px-6 py-12'>
         <div className='mb-8'>
@@ -225,7 +156,7 @@ export default function CodeReview({ onNavigate, onLogout }: CodeReviewProps) {
             </div>
 
             <button
-              onClick={analyzeCode}
+              onClick={handleAnalyze}
               disabled={!code || isAnalyzing}
               className='w-full px-6 py-4 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2'
             >

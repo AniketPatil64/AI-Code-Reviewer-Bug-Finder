@@ -3,6 +3,7 @@ import Navbar from '@/components/dashboard/navbar';
 import { Code, Bug, Wrench, Globe, Eye, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
@@ -15,6 +16,7 @@ export default function Dashboard({
   onLogout,
   onViewDetails,
 }: DashboardProps) {
+  const router = useRouter();
   const [reviews, setReviews] = useState([
     {
       id: '1',
@@ -68,16 +70,15 @@ export default function Dashboard({
   const { data: session, status } = useSession();
   const getFirstNameFormatted = (fullName?: string): string => {
     if (!fullName) return '';
-
     const firstName = fullName.trim().split(' ')[0];
-
     return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
   };
+
   return (
     <div className='min-h-screen bg-black text-white'>
       <Navbar
         currentPage='dashboard'
-        onNavigate={onNavigate}
+        //onNavigate={onNavigate}
         // onLogout={onLogout}
       />
 
@@ -96,7 +97,10 @@ export default function Dashboard({
             onClick={() => onNavigate('review')}
             className='w-full p-8 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 transition-all group'
           >
-            <div className='flex items-center justify-between'>
+            <div
+              className='flex items-center justify-between cursor-pointer'
+              onClick={() => router.push('/code-review')}
+            >
               <div className='text-left'>
                 <h2 className='text-2xl mb-2'>Start New Code Review</h2>
                 <p className='text-purple-100'>
