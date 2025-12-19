@@ -29,22 +29,110 @@ interface CodeReviewProps {
   onLogout: () => void;
 }
 
+interface AnalysisResult {
+  bugs: Array<{
+    line: number;
+    severity: 'low' | 'medium' | 'high';
+    description: string;
+  }>;
+  fixes: Array<{
+    line: number;
+    suggestion: string;
+  }>;
+  explanation: Array<{
+    line: number;
+    text: string;
+  }>;
+  complexity: {
+    time: string;
+    space: string;
+    explanation: string;
+  };
+  finalCode: string;
+}
+
 export default function CodeReview({}: CodeReviewProps) {
   const [code, setCode] = useState('');
   const { status } = useSession(); // 👈 source of truth
   const router = useRouter();
   const [language, setLanguage] = useState('JavaScript');
   const isAnalyzing = false;
-  const result = null;
+  const [result, setResult] = useState<AnalysisResult>({} as AnalysisResult);
   const { attempts, increment, isLoggedIn } = useDemoStore();
   const [showLimitPopup, setShowLimitPopup] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<
     'bugs' | 'fixes' | 'explanation' | 'complexity'
   >('bugs');
   const [isDark, setIsDark] = useState(true);
 
-  const handleAnalyze = () => {
+  function buildPrompt(code: string, language: string) {
+    return `
+  You are an expert ${language} code reviewer.
+
+  Analyze the following code and return ONLY valid JSON.
+  DO NOT add markdown.
+  DO NOT add explanations outside JSON.
+  DO NOT wrap the response in \`\`\`.
+
+  JSON format MUST be exactly:
+
+  {
+    "bugs": [
+      {
+        "line": number,
+        "severity": "low" | "medium" | "high",
+        "description": string
+      }
+    ],
+    "fixes": [
+      {
+        "line": number,
+        "suggestion": string
+      }
+    ],
+    "explanation": [
+      {
+        "line": number,
+        "text": string
+      }
+    ],
+    "complexity": {
+      "time": string,
+      "space": string,
+      "explanation": string
+    },
+    "finalCode": string
+  }
+
+  Rules:
+  - explanation MUST be line-by-line (one entry per line of code)
+  - complexity MUST ONLY describe time and space complexity
+  - bugs MUST include exact line numbers
+  - fixes MUST directly correspond to bugs (same line numbers)
+  - finalCode MUST contain the FULL corrected code so it can be copied directly
+  - return ONLY valid JSON
+
+  Code to analyze:
+  ${code}
+    `;
+  }
+
+  const handleAnalyze = async () => {
+    console.log('Analyzing code...');
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: buildPrompt(code, language),
+      }),
+    });
+
+    // 👇 Parse JSON properly
+    const data = await res.json();
+    setResult(data);
+
     if (status === 'authenticated') {
       return;
     }
@@ -61,6 +149,19 @@ export default function CodeReview({}: CodeReviewProps) {
 
     increment();
     console.log('Analyze demo code');
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return 'border-red-500 bg-red-500/10';
+      case 'medium':
+        return 'border-yellow-500 bg-yellow-500/10';
+      case 'low':
+        return 'border-green-500 bg-green-500/10';
+      default:
+        return 'border-white/10';
+    }
   };
 
   return (
@@ -232,11 +333,11 @@ export default function CodeReview({}: CodeReviewProps) {
                     <div className='space-y-4'>
                       <div className='flex items-center justify-between mb-4'>
                         <h3 className='text-lg'>
-                          {/* {result.bugs.length}{' '} */}
-                          {/* {result.bugs.length === 1 ? 'Bug' : 'Bugs'} Found */}
+                          {result?.bugs?.length || ''}{' '}
+                          {result?.bugs?.length === 1 ? 'Bug' : 'Bugs'} Found
                         </h3>
                       </div>
-                      {/* {result.bugs.map((bug, index) => (
+                      {result?.bugs?.map((bug, index) => (
                         <div
                           key={index}
                           className={`p-4 rounded-lg border ${getSeverityColor(
@@ -248,75 +349,90 @@ export default function CodeReview({}: CodeReviewProps) {
                               Line {bug.line} • {bug.severity}
                             </span>
                           </div>
-                          <p className='mb-2'>{bug.description}</p>
+                          <p className='mb-2 text-sm'>{bug.description}</p>
                         </div>
-                      ))} */}
+                      ))}
                     </div>
                   )}
 
                   {activeTab === 'fixes' && (
                     <div className='space-y-4'>
                       <h3 className='text-lg mb-4'>Suggested Fixes</h3>
-                      {/* {result.bugs.map((bug, index) => (
-                        <div
-                          key={index}
-                          className='p-4 rounded-lg bg-green-500/10 border border-green-500/20'
-                        >
-                          <div className='flex items-start justify-between mb-2'>
-                            <span className='text-sm text-green-400'>
-                              Line {bug.line}
-                            </span>
-                            <button className='p-1 rounded hover:bg-white/10 transition-colors'>
-                              <Copy className='w-4 h-4' />
-                            </button>
-                          </div>
-                          <p className='text-green-300 mb-2'>
-                            {bug.suggestion}
-                          </p>
+                      {result?.finalCode?.split('\n').map((line, index) => (
+                        <div key={index} className='flex text-sm font-mono'>
+                          <span className='text-gray-500 mr-4 w-8 text-right select-none'>
+                            {index + 1}
+                          </span>
+                          <span>{line}</span>
                         </div>
-                      ))} */}
+                      ))}
                     </div>
                   )}
 
                   {activeTab === 'explanation' && (
                     <div>
                       <h3 className='text-lg mb-4'>Code Analysis</h3>
-                      <p className='text-gray-300 leading-relaxed'>
-                        {/* {result.explanation} */}
-                      </p>
+                      <div className='text-gray-300 leading-relaxed space-y-2'>
+                        {result?.explanation?.map((item, index) => (
+                          <p key={index} className='text-sm'>
+                            <div className='p-6 rounded-lg bg-purple-500/10 border border-purple-500/20 mb-4'>
+                              <strong>Line {item.line}:</strong> {item.text}
+                            </div>
+                          </p>
+                        ))}
+                      </div>
                     </div>
                   )}
 
                   {activeTab === 'complexity' && (
                     <div>
-                      <h3 className='text-lg mb-4'>Time Complexity Analysis</h3>
-                      <div className='p-6 rounded-lg bg-purple-500/10 border border-purple-500/20 mb-4'>
-                        <div className='text-3xl mb-2 text-purple-300 font-mono'>
-                          {/* {result.complexity.split('-')[0].trim()} */}
+                      <h3 className='text-lg mb-4'>
+                        Time & Space Complexity Analysis
+                      </h3>
+                      {result?.complexity?.time && (
+                        <div className='p-6 rounded-lg bg-purple-500/10 border border-purple-500/20 mb-4'>
+                          <div className='text-sm mb-2 text-purple-300 font-mono'>
+                            Time: {result?.complexity?.time}
+                          </div>
                         </div>
-                      </div>
-                      <p className='text-gray-300 leading-relaxed'>
-                        {/* {result.complexity.split('-')[1]?.trim()} */}
-                      </p>
+                      )}
+                      {result?.complexity?.space && (
+                        <div className='p-6 rounded-lg bg-purple-500/10 border border-purple-500/20 mb-4'>
+                          <div className='text-sm mb-2 text-purple-300 font-mono'>
+                            Space: {result?.complexity?.space}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
 
                 {/* Actions */}
-                <div className='p-4 border-t border-white/10 flex gap-2'>
-                  <button className='flex-1 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-sm'>
-                    <Copy className='w-4 h-4' />
-                    Copy
-                  </button>
-                  <button className='flex-1 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-sm'>
-                    <Download className='w-4 h-4' />
-                    Download
-                  </button>
-                  <button className='flex-1 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-sm'>
-                    <Share2 className='w-4 h-4' />
-                    Share
-                  </button>
-                </div>
+                {activeTab === 'fixes' && (
+                  <div className='p-4 border-t border-white/10 flex gap-2'>
+                    <button
+                      className='flex-1 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-sm'
+                      onClick={() => {
+                        if (result?.finalCode) {
+                          navigator.clipboard.writeText(result.finalCode);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 1500); // hide after 1.5s
+                        }
+                      }}
+                    >
+                      <Copy className='w-4 h-4' />
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                    <button className='flex-1 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-sm'>
+                      <Download className='w-4 h-4' />
+                      Download
+                    </button>
+                    <button className='flex-1 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-sm'>
+                      <Share2 className='w-4 h-4' />
+                      Share
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className='h-full flex items-center justify-center p-12 text-center'>
