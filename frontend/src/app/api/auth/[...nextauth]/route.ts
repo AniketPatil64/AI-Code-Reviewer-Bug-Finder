@@ -21,41 +21,48 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
 
-  callbacks: {
-    async signIn({ user, account }) {
-      await connectToMongoDB();
+ callbacks: {
+  async signIn({ user, account }) {
+    await connectToMongoDB();
 
-      let dbUser = await User.findOne({ email: user.email });
+    let dbUser = await User.findOne({ email: user.email });
 
-      if (!dbUser) {
-        dbUser = await User.create({
-          name: user.name,
-          email: user.email,
-          image: user.image,
-          provider: account?.provider,
-        });
-      }
+    if (!dbUser) {
+      dbUser = await User.create({
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        provider: account?.provider,
+      });
+    }
 
-      // 🔑 attach MongoDB _id
-      (user).id = dbUser._id.toString();
-
-      return true;
-    },
-
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = (user).id;
-      }
-      return token;
-    },
-
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
+    user.id = dbUser._id.toString();
+    return true;
   },
+
+  async jwt({ token, user }) {
+    if (user) {
+      token.id = user.id;
+    }
+    return token;
+  },
+
+  async session({ session, token }) {
+    if (session.user) {
+      session.user.id = token.id as string;
+    }
+    return session;
+  },
+
+  async redirect({ url, baseUrl }) {
+    // allow relative URLs
+    if (url.startsWith('/')) return `${baseUrl}${url}`;
+    // allow same-origin URLs
+    if (new URL(url).origin === baseUrl) return url;
+    // fallback
+    return `${baseUrl}/dashboard`;
+  },
+},
 
   pages: {
     signIn: "/login",
