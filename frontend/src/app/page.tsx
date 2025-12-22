@@ -12,7 +12,6 @@ export default function Home() {
   const { status } = useSession(); // 👈 source of truth
 
   useEffect(() => {
-    // console.log('Session status:', status);
     if (status === 'authenticated') {
       router.replace('/dashboard'); // redirect logged-in users
     }
