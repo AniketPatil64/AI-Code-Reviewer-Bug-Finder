@@ -1,6 +1,9 @@
-import NextAuth, { NextAuthOptions } from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
+import NextAuth, { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
+
+import { User } from "@/models/User";
+import { connectToMongoDB } from "../../../../../types/db";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -15,28 +18,47 @@ export const authOptions: NextAuthOptions = {
   ],
 
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
   },
 
   callbacks: {
-    async jwt({ token, account }) {
-      if (account) {
-        token.provider = account.provider;
-        token.accessToken = account.access_token;
+    async signIn({ user, account }) {
+      await connectToMongoDB();
+
+      let dbUser = await User.findOne({ email: user.email });
+
+      if (!dbUser) {
+        dbUser = await User.create({
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          provider: account?.provider,
+        });
+      }
+
+      // 🔑 attach MongoDB _id
+      (user).id = dbUser._id.toString();
+
+      return true;
+    },
+
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = (user).id;
       }
       return token;
     },
 
     async session({ session, token }) {
       if (session.user) {
-        session.user.provider = token.provider;
+        session.user.id = token.id as string;
       }
       return session;
     },
   },
 
   pages: {
-    signIn: '/login',
+    signIn: "/login",
   },
 
   secret: process.env.NEXTAUTH_SECRET,

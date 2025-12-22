@@ -20,7 +20,6 @@ export async function POST(req: Request) {
   try {
     parsed = JSON.parse(rawText || '');
   } catch (e) {
-    console.error("Invalid JSON from AI:", rawText);
     return Response.json(
       { error: "AI returned invalid JSON" },
       { status: 500 }
@@ -30,7 +29,6 @@ export async function POST(req: Request) {
   return Response.json(parsed, { status: 200 });
 
   } catch (err) {
-    console.error(err);
     return Response.json({ error: 'Internal error' }, { status: 500 });
   }
 }

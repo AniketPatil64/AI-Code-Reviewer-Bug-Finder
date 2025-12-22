@@ -6,7 +6,7 @@ interface ButtonProps {
   label: string;
   action?: () => void;
   route?: string;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'danger';
 }
 
 interface CommonModalProps {
@@ -64,7 +64,9 @@ export default function CommonModal({
               className={`px-4 py-2 rounded-md text-sm font-medium transition ${
                 btn.variant === 'primary'
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  : btn.variant === 'secondary'
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-red-600 text-white hover:bg-red-700'
               }`}
             >
               {btn.label}
