@@ -1,15 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import {
-  User,
-  Mail,
-  Github,
-  Chrome,
-} from 'lucide-react';
+import { User, Mail, Github, Chrome } from 'lucide-react';
 import Navbar from '@/components/dashboard/navbar';
 import { signOut, useSession } from 'next-auth/react';
 import CommonModal from '@/components/popup/CommonModal';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 interface ProfileProps {
   onNavigate: (page: string) => void;
@@ -67,7 +62,7 @@ export default function Profile({ onNavigate }: ProfileProps) {
       }
       router.push('/');
     } catch (error) {
-      // console.error('Error deleting account:', error);
+      throw error;
     }
   };
 
