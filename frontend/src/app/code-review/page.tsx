@@ -12,6 +12,7 @@ import {
   Share2,
   Moon,
   Sun,
+  Loader,
 } from 'lucide-react';
 import Navbar from '@/components/dashboard/navbar';
 import { useDemoStore } from '@/store/demoStore';
@@ -56,12 +57,13 @@ export default function CodeReview({}: CodeReviewProps) {
   const { status } = useSession(); // 👈 source of truth
   const router = useRouter();
   const [language, setLanguage] = useState('JavaScript');
-  const isAnalyzing = false;
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult>({} as AnalysisResult);
   const { attempts, increment, isLoggedIn } = useDemoStore();
   const [showLimitPopup, setShowLimitPopup] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isResultVisible, setIsResultVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<
     'bugs' | 'fixes' | 'explanation' | 'complexity'
   >('bugs');
@@ -120,7 +122,15 @@ export default function CodeReview({}: CodeReviewProps) {
   }
 
   const handleAnalyze = async () => {
-    console.log('Analyzing code...');
+    setIsAnalyzing(true);
+    if (status !== 'authenticated' && !isLoggedIn) {
+      if (attempts >= 3) {
+        setIsModalOpen(true);
+        setShowLimitPopup(true);
+        return;
+      }
+    }
+
     const res = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -131,24 +141,17 @@ export default function CodeReview({}: CodeReviewProps) {
 
     // 👇 Parse JSON properly
     const data = await res.json();
-    setResult(data);
-
-    if (status === 'authenticated') {
-      return;
+    if (data) {
+      setResult(data);
+      setIsResultVisible(true);
     }
+
     if (isLoggedIn) {
-      console.log('Analyze code (logged-in)');
-      return;
-    }
-
-    if (attempts >= 3) {
-      setIsModalOpen(true);
-      setShowLimitPopup(true);
       return;
     }
 
     increment();
-    console.log('Analyze demo code');
+    setIsAnalyzing(false);
   };
 
   const getSeverityColor = (severity: string) => {
@@ -263,7 +266,7 @@ export default function CodeReview({}: CodeReviewProps) {
             >
               {isAnalyzing ? (
                 <>
-                  <div className='w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin' />
+                  <Loader className='w-5 h-5' />
                   Analyzing Code...
                 </>
               ) : (
@@ -374,11 +377,11 @@ export default function CodeReview({}: CodeReviewProps) {
                       <h3 className='text-lg mb-4'>Code Analysis</h3>
                       <div className='text-gray-300 leading-relaxed space-y-2'>
                         {result?.explanation?.map((item, index) => (
-                          <p key={index} className='text-sm'>
-                            <div className='p-6 rounded-lg bg-purple-500/10 border border-purple-500/20 mb-4'>
+                          <div key={index} className='text-sm'>
+                            <p className='p-6 rounded-lg bg-purple-500/10 border border-purple-500/20 mb-4'>
                               <strong>Line {item.line}:</strong> {item.text}
-                            </div>
-                          </p>
+                            </p>
+                          </div>
                         ))}
                       </div>
                     </div>
