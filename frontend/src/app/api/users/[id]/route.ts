@@ -7,7 +7,7 @@ export async function GET(
   _: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params; // ✅ IMPORTANT
+  const { id } = await context.params;
   await connectToMongoDB();
   const user = await User.findById(id);
   return NextResponse.json(user);
@@ -15,11 +15,12 @@ export async function GET(
 
 
 // UPDATE USER
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request,  context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const body = await req.json();
   await connectToMongoDB();
 
-  const updatedUser = await User.findByIdAndUpdate(params.id, body, {
+  const updatedUser = await User.findByIdAndUpdate(id, body, {
     new: true,
   });
 
