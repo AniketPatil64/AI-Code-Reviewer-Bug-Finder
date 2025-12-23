@@ -4,6 +4,9 @@ import GitHubProvider from "next-auth/providers/github";
 
 import { User } from "@/models/User";
 import { connectToMongoDB } from "../../../../../types/db";
+console.log("NEXTAUTH_SECRET:", process.env.NEXTAUTH_SECRET);
+console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET);
 
 export const authOptions: NextAuthOptions = {
   providers: [

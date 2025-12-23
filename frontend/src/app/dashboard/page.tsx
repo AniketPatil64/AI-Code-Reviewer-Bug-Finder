@@ -1,7 +1,7 @@
 'use client';
 import Navbar from '@/components/dashboard/navbar';
 import { Code, Bug, Wrench, Globe, Eye, TrendingUp } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
@@ -10,68 +10,100 @@ interface DashboardProps {
   onLogout: () => void;
   onViewDetails: (id: string) => void;
 }
+interface historyItem {
+  _id: string;
+  id: string;
+  aiResponse: {
+    title: string;
+    bugs: Array<{
+      line: number;
+      severity: 'low' | 'medium' | 'high';
+      description: string;
+    }>;
+    fixes: Array<{
+      line: number;
+      suggestion: string;
+    }>;
+    explanation: Array<{
+      line: number;
+      text: string;
+    }>;
+    complexity: {
+      time: string;
+      space: string;
+      explanation: string;
+    };
+    finalCode: string;
+  };
+  createdAt: Date;
+  language: string;
+}
 
-export default function Dashboard({
-  onNavigate,
-  onLogout,
-  onViewDetails,
-}: DashboardProps) {
+export default function Dashboard({}: DashboardProps) {
   const router = useRouter();
-  const [reviews, setReviews] = useState([
-    {
-      id: '1',
-      title: 'authentication.js',
-      language: 'JavaScript',
-      code: 'function login(user, pass) {\n  if (user == admin) {\n    return true;\n  }\n}',
-      bugs: [
-        {
-          line: 2,
-          severity: 'critical',
-          description: 'Using == instead of === allows type coercion',
-          suggestion: 'Use strict equality (===) for comparison',
-        },
-        {
-          line: 1,
-          severity: 'warning',
-          description: 'Password parameter is not being validated',
-          suggestion: 'Add password validation before authentication',
-        },
-      ],
-      explanation:
-        'This login function has security vulnerabilities including loose equality comparison and missing password validation.',
-      complexity: 'O(1) - Constant time complexity',
-      date: '2025-12-07',
-      bugsCount: 2,
-      fixesCount: 2,
-    },
-    {
-      id: '2',
-      title: 'sorting.py',
-      language: 'Python',
-      code: 'def bubble_sort(arr):\n  for i in range(len(arr)):\n    for j in range(len(arr)):\n      if arr[j] > arr[j+1]:\n        arr[j], arr[j+1] = arr[j+1], arr[j]',
-      bugs: [
-        {
-          line: 4,
-          severity: 'critical',
-          description:
-            'Index out of bounds error - j+1 can exceed array length',
-          suggestion:
-            'Change range to len(arr)-1 or len(arr)-i-1 for optimization',
-        },
-      ],
-      explanation:
-        'Classic bubble sort implementation with an index boundary issue that will cause runtime errors.',
-      complexity: 'O(n²) - Quadratic time complexity',
-      date: '2025-12-06',
-      bugsCount: 1,
-      fixesCount: 1,
-    },
-  ]);
-  const { data: session, status } = useSession();
+  const [history, setHistory] = useState<historyItem[]>([]);
+  const { data: session } = useSession();
+  const [bugsFound, setBugsFound] = useState(0);
+  const [fixesGenerated, setFixesGenerated] = useState(0);
+  const [languagesDetected, setLanguagesDetected] = useState(0);
   const getFirstNameFormatted = (fullName?: string): string => {
     if (!fullName) return '';
     const firstName = fullName.trim().split(' ')[0];
     return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+  };
+  const onNavigate = (page: string) => {
+    router.push(`/${page}`);
+  };
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(
+          `/api/history?userId=${session?.user.id}&page=${1}&limit=${10}`
+        );
+        console.log('Fetch response:', res);
+        if (!res.ok) {
+          throw new Error('Failed to fetch user');
+        }
+
+        const data = await res.json();
+        setHistory(data.data);
+      } catch (error) {
+        console.error('Error fetching user history:', error);
+      } finally {
+        // setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [session, router]);
+
+  useEffect(() => {
+    if (!history.length) {
+      setBugsFound(0);
+      setFixesGenerated(0);
+      setLanguagesDetected(0);
+      return;
+    }
+
+    const bugs = history.reduce(
+      (sum, item) => sum + (item.aiResponse?.bugs?.length || 0),
+      0
+    );
+
+    const fixes = history.reduce(
+      (sum, item) => sum + (item.aiResponse?.fixes?.length || 0),
+      0
+    );
+
+    const languages = new Set(history.map((item) => item.language)).size;
+
+    setBugsFound(bugs);
+    setFixesGenerated(fixes);
+    setLanguagesDetected(languages);
+  }, [history]);
+
+  const onViewDetails = (id: string) => {
+    router.push(`/code-review/${id}`);
   };
 
   return (
@@ -123,7 +155,7 @@ export default function Dashboard({
                 </div>
                 <TrendingUp className='w-4 h-4 text-green-400' />
               </div>
-              <div className='text-3xl mb-1'>{'00'}</div>
+              <div className='text-3xl mb-1'>{history.length || '00'}</div>
               <div className='text-sm text-gray-400'>Total Reviews</div>
             </div>
 
@@ -134,7 +166,7 @@ export default function Dashboard({
                 </div>
                 <TrendingUp className='w-4 h-4 text-green-400' />
               </div>
-              <div className='text-3xl mb-1'>{'00'}</div>
+              <div className='text-3xl mb-1'>{bugsFound || '00'}</div>
               <div className='text-sm text-gray-400'>Bugs Found</div>
             </div>
 
@@ -145,7 +177,7 @@ export default function Dashboard({
                 </div>
                 <TrendingUp className='w-4 h-4 text-green-400' />
               </div>
-              <div className='text-3xl mb-1'>{'00'}</div>
+              <div className='text-3xl mb-1'>{fixesGenerated || '00'}</div>
               <div className='text-sm text-gray-400'>Fixes Generated</div>
             </div>
 
@@ -156,7 +188,7 @@ export default function Dashboard({
                 </div>
                 <TrendingUp className='w-4 h-4 text-green-400' />
               </div>
-              <div className='text-3xl mb-1'>{'00'}</div>
+              <div className='text-3xl mb-1'>{languagesDetected || '00'}</div>
               <div className='text-sm text-gray-400'>Languages Detected</div>
             </div>
           </div>
@@ -186,31 +218,34 @@ export default function Dashboard({
                 </tr>
               </thead>
               <tbody>
-                {reviews.slice(0, 5).map((review) => (
+                {history?.slice(0, 5).map((review) => (
                   <tr
-                    key={review.id}
+                    key={review?._id}
                     className='border-b border-white/5 hover:bg-white/5 transition-colors'
                   >
                     <td className='px-6 py-4'>
-                      <span className='font-mono text-sm'>{review.title}</span>
+                      <span className='font-mono text-sm'>
+                        {review?.aiResponse?.title}
+                      </span>
                     </td>
                     <td className='px-6 py-4'>
                       <span className='px-2 py-1 rounded text-xs bg-blue-500/20 text-blue-300'>
-                        {review.language}
+                        {review?.language}
                       </span>
                     </td>
                     <td className='px-6 py-4 text-sm text-gray-400'>
-                      {new Date(review.date).toLocaleDateString('en-US', {
+                      {new Date(review?.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                       })}
                     </td>
                     <td className='px-6 py-4 text-sm text-gray-400'>
-                      {review.bugsCount} bugs, {review.fixesCount} fixes
+                      {review?.aiResponse?.bugs.length} bugs,{' '}
+                      {review?.aiResponse?.fixes.length} fixes
                     </td>
                     <td className='px-6 py-4'>
                       <button
-                        onClick={() => onViewDetails(review.id)}
+                        onClick={() => onViewDetails(review._id)}
                         className='px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 transition-colors flex items-center gap-2 text-sm'
                       >
                         <Eye className='w-4 h-4' />
@@ -222,7 +257,7 @@ export default function Dashboard({
               </tbody>
             </table>
 
-            {reviews.length === 0 && (
+            {history?.length === 0 && (
               <div className='text-center py-12 text-gray-400'>
                 <Code className='w-12 h-12 mx-auto mb-4 opacity-50' />
                 <p>No reviews yet. Start your first code review!</p>

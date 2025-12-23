@@ -10,11 +10,7 @@ interface HistoryProps {
   onViewDetails: (id: string) => void;
 }
 
-export default function History({
-  onNavigate,
-  onLogout,
-  onViewDetails,
-}: HistoryProps) {
+export default function History({}: HistoryProps) {
   const [filterLanguage, setFilterLanguage] = useState('all');
   const [filterDate, setFilterDate] = useState('all');
   const [reviews, setReviews] = useState([
@@ -83,6 +79,10 @@ export default function History({
     return 'text-red-400';
   };
 
+  const onViewDetails = (id: string) => {
+    // Navigate to detailed view page
+    console.log('View details for review ID:', id);
+  };
   return (
     <div className='min-h-screen bg-black text-white'>
       <Navbar

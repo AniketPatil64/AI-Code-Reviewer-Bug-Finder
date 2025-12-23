@@ -54,7 +54,7 @@ interface AnalysisResult {
 
 export default function CodeReview({}: CodeReviewProps) {
   const [code, setCode] = useState('');
-  const { status } = useSession(); // 👈 source of truth
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [language, setLanguage] = useState('JavaScript');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -63,7 +63,6 @@ export default function CodeReview({}: CodeReviewProps) {
   const [showLimitPopup, setShowLimitPopup] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [isResultVisible, setIsResultVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<
     'bugs' | 'fixes' | 'explanation' | 'complexity'
   >('bugs');
@@ -81,7 +80,8 @@ export default function CodeReview({}: CodeReviewProps) {
   JSON format MUST be exactly:
 
   {
-    "bugs": [
+  "title": string,
+  "bugs": [
       {
         "line": number,
         "severity": "low" | "medium" | "high",
@@ -109,6 +109,7 @@ export default function CodeReview({}: CodeReviewProps) {
   }
 
   Rules:
+  - title MUST be a short descriptive summary of the code issue (max 4 words)
   - explanation MUST be line-by-line (one entry per line of code)
   - complexity MUST ONLY describe time and space complexity
   - bugs MUST include exact line numbers
@@ -141,9 +142,20 @@ export default function CodeReview({}: CodeReviewProps) {
 
     // 👇 Parse JSON properly
     const data = await res.json();
-    if (data) {
+    if (data && data.bugs && data.fixes) {
       setResult(data);
-      setIsResultVisible(true);
+      await fetch('/api/history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: session?.user?.id, // from NextAuth
+          inputCode: code,
+          aiResponse: data, // your AI JSON response
+          language: language,
+        }),
+      });
     }
 
     if (isLoggedIn) {
@@ -404,6 +416,13 @@ export default function CodeReview({}: CodeReviewProps) {
                           <div className='text-sm mb-2 text-purple-300 font-mono'>
                             Space: {result?.complexity?.space}
                           </div>
+                        </div>
+                      )}
+                      {result?.complexity?.explanation && (
+                        <div className='p-4 rounded-lg bg-purple-500/10 border border-purple-500/20 mt-4'>
+                          <p className='text-sm'>
+                            {result?.complexity?.explanation}
+                          </p>
                         </div>
                       )}
                     </div>
