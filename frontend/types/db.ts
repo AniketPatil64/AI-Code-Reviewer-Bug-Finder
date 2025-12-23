@@ -16,7 +16,6 @@ export async function connectToMongoDB() {
     // Cache the connection for future use
     cachedConnection = cnx.connection;
     // Log message indicating a new MongoDB connection is established
-    // console.log("New mongodb connection established");
     // Return the newly established connection
     return cachedConnection;
   } catch (error) {

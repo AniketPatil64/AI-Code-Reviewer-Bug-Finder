@@ -32,8 +32,6 @@ export async function GET(req: Request) {
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
 
-  console.log("Fetching history for user ID:", userId);
-
   if (!userId) {
     return NextResponse.json(
       { error: "User not authenticated" },

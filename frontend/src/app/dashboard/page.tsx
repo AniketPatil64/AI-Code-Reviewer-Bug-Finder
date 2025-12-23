@@ -61,11 +61,9 @@ export default function Dashboard({}: DashboardProps) {
         const res = await fetch(
           `/api/history?userId=${session?.user.id}&page=${1}&limit=${10}`
         );
-        console.log('Fetch response:', res);
         if (!res.ok) {
           throw new Error('Failed to fetch user');
         }
-
         const data = await res.json();
         setHistory(data.data);
       } catch (error) {
