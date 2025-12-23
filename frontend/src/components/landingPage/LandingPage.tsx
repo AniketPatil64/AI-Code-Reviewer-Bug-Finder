@@ -260,18 +260,18 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
                 GitHub
               </a>
               <a
-                href='#'
+                href='/about-us'
                 className='hover:text-white transition-colors flex items-center gap-2'
               >
                 <Mail className='w-4 h-4' />
-                Contact
+                About us
               </a>
               <a
-                href='#'
+                href='/contact-us'
                 className='hover:text-white transition-colors flex items-center gap-2'
               >
-                <Shield className='w-4 h-4' />
-                Privacy Policy
+                <Mail className='w-4 h-4' />
+                Contact us
               </a>
             </div>
           </div>
