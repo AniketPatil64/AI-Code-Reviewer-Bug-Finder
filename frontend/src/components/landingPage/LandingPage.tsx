@@ -253,7 +253,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
 
             <div className='flex gap-8 text-sm text-gray-400'>
               <a
-                href='#'
+                href='https://github.com/AniketPatil64/AI-Code-Reviewer-Bug-Finder'
                 className='hover:text-white transition-colors flex items-center gap-2'
               >
                 <Github className='w-4 h-4' />
@@ -278,6 +278,9 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
 
           <div className='text-center mt-8 text-sm text-gray-500'>
             © 2025 CodeReviewer. All rights reserved.
+          </div>
+          <div className='text-center mt-4 text-sm text-gray-500'>
+            Developed by Aniket Patil.
           </div>
         </div>
       </footer>
