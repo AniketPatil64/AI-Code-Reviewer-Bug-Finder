@@ -124,7 +124,7 @@ export default function Dashboard({}: DashboardProps) {
         {/* Quick Action Card */}
         <div className='mb-12'>
           <button
-            onClick={() => onNavigate('review')}
+            onClick={() => router.push('/code-review')}
             className='w-full p-8 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 transition-all group'
           >
             <div
