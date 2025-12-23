@@ -1,20 +1,46 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Eye, Filter, Calendar } from 'lucide-react';
 import Navbar from '@/components/dashboard/navbar';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 interface HistoryProps {
   onNavigate: (page: string) => void;
   onLogout: () => void;
   onViewDetails: (id: string) => void;
 }
+interface historyItem {
+  _id: string;
+  id: string;
+  aiResponse: {
+    title: string;
+    bugs: Array<{
+      line: number;
+      severity: 'low' | 'medium' | 'high';
+      description: string;
+    }>;
+    fixes: Array<{
+      line: number;
+      suggestion: string;
+    }>;
+    explanation: Array<{
+      line: number;
+      text: string;
+    }>;
+    complexity: {
+      time: string;
+      space: string;
+      explanation: string;
+    };
+    finalCode: string;
+  };
+  createdAt: Date;
+  language: string;
+}
 
-export default function History({
-  onNavigate,
-  onLogout,
-  onViewDetails,
-}: HistoryProps) {
+export default function History({}: HistoryProps) {
   const [filterLanguage, setFilterLanguage] = useState('all');
   const [filterDate, setFilterDate] = useState('all');
   const [reviews, setReviews] = useState([
@@ -67,8 +93,15 @@ export default function History({
       fixesCount: 1,
     },
   ]);
-
-  const languages = ['all', ...new Set(reviews.map((r) => r.language))];
+  const [history, setHistory] = useState<historyItem[]>([]);
+  const router = useRouter();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const { data: session } = useSession();
+  const languages = useMemo(
+    () => ['all', ...Array.from(new Set(history.map((r) => r.language)))],
+    [history]
+  );
 
   const filteredReviews = reviews.filter((review) => {
     const languageMatch =
@@ -83,6 +116,43 @@ export default function History({
     return 'text-red-400';
   };
 
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(
+          `/api/history?userId=${session?.user.id}&page=${page}&limit=${limit}`
+        );
+        if (!res.ok) {
+          throw new Error('Failed to fetch user');
+        }
+        const data = await res.json();
+        setHistory(data?.data);
+      } catch (error) {
+        console.error('Error fetching user history:', error);
+      } finally {
+        // setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [session, page, limit]);
+
+  const filteredHistory = useMemo(() => {
+    return history.filter((item) => {
+      const languageMatch =
+        filterLanguage === 'all' || item.language === filterLanguage;
+
+      const dateMatch =
+        filterDate === 'all' ||
+        new Date(item.createdAt).toISOString().split('T')[0] === filterDate;
+
+      return languageMatch && dateMatch;
+    });
+  }, [history, filterLanguage, filterDate]);
+
+  const onViewDetails = (id: string) => {
+    router.push(`/code-review/${id}`);
+  };
   return (
     <div className='min-h-screen bg-black text-white'>
       <Navbar
@@ -107,30 +177,15 @@ export default function History({
               className='px-4 py-2 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:border-purple-500 transition-colors'
             >
               {languages.map((lang) => (
-                <option key={lang} value={lang}>
+                <option key={lang} value={lang} className='text-black'>
                   {lang === 'all' ? 'All Languages' : lang}
                 </option>
               ))}
             </select>
           </div>
-
-          <div className='flex items-center gap-2'>
-            <Calendar className='w-4 h-4 text-gray-400' />
-            <select
-              value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
-              className='px-4 py-2 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:border-purple-500 transition-colors'
-            >
-              <option value='all'>All Time</option>
-              <option value={new Date().toISOString().split('T')[0]}>
-                Today
-              </option>
-            </select>
-          </div>
-
-          <div className='ml-auto text-sm text-gray-400'>
+          {/* <div className='ml-auto text-sm text-gray-400'>
             Showing {filteredReviews.length} of {reviews.length} reviews
-          </div>
+          </div> */}
         </div>
 
         {/* Reviews Table */}
@@ -147,18 +202,20 @@ export default function History({
               </tr>
             </thead>
             <tbody>
-              {filteredReviews.map((review) => (
+              {filteredHistory.map((review, index) => (
                 <tr
                   key={review.id}
                   className='border-b border-white/5 hover:bg-white/5 transition-colors'
                 >
                   <td className='px-6 py-4'>
                     <span className='font-mono text-sm text-gray-400'>
-                      #{review.id}
+                      #{index + 1}
                     </span>
                   </td>
                   <td className='px-6 py-4'>
-                    <span className='font-mono text-sm'>{review.title}</span>
+                    <span className='font-mono text-sm'>
+                      {review?.aiResponse?.title}
+                    </span>
                   </td>
                   <td className='px-6 py-4'>
                     <span className='px-2 py-1 rounded text-xs bg-blue-500/20 text-blue-300'>
@@ -166,13 +223,17 @@ export default function History({
                     </span>
                   </td>
                   <td className='px-6 py-4'>
-                    <span className={`${getSeverityColor(review.bugsCount)}`}>
-                      {review.bugsCount}{' '}
-                      {review.bugsCount === 1 ? 'bug' : 'bugs'}
+                    <span
+                      className={`${getSeverityColor(
+                        review?.aiResponse.bugs.length
+                      )}`}
+                    >
+                      {review?.aiResponse.bugs.length}{' '}
+                      {review?.aiResponse.bugs.length === 1 ? 'bug' : 'bugs'}
                     </span>
                   </td>
                   <td className='px-6 py-4 text-sm text-gray-400'>
-                    {new Date(review.date).toLocaleDateString('en-US', {
+                    {new Date(review.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
@@ -180,7 +241,7 @@ export default function History({
                   </td>
                   <td className='px-6 py-4'>
                     <button
-                      onClick={() => onViewDetails(review.id)}
+                      onClick={() => onViewDetails(review._id)}
                       className='px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 transition-colors flex items-center gap-2 text-sm'
                     >
                       <Eye className='w-4 h-4' />
@@ -192,7 +253,7 @@ export default function History({
             </tbody>
           </table>
 
-          {filteredReviews.length === 0 && (
+          {history.length === 0 && (
             <div className='text-center py-12 text-gray-400'>
               <p>No reviews found matching your filters</p>
             </div>
